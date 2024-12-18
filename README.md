@@ -1,2 +1,2 @@
 # skripsi-101
-Segala kebutuhan script skripsi ada di sini!!
+Semoga bisa mempermudah dan mempercepat proses pengambilan data untuk keperluan penelitian skripsi/ riset anda!
