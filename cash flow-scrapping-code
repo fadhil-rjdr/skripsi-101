@@ -1,0 +1,87 @@
+import yfinance as yf
+import pandas as pd
+
+# Daftar perusahaan sub-sektor Plantations & Crops
+plantations_crops = {
+    'AALI.JK': 'Astra Agro Lestari Tbk.',
+    'BISI.JK': 'BISI International Tbk.',
+    'BWPT.JK': 'Eagle High Plantations Tbk.',
+    'DSNG.JK': 'Dharma Satya Nusantara Tbk.',
+    'LSIP.JK': 'PT PP London Sumatra Indonesia TBK.',
+    'SGRO.JK': 'Sampoerna Agro Tbk.',
+    'SIMP.JK': 'Salim Ivomas Pratama Tbk.',
+    'SMAR.JK': 'PT SMAR Tbk.',
+}
+
+# Daftar perusahaan sub-sektor Processed Foods
+processed_foods = {
+    'AISA.JK': 'Tiga Pilar Sejahtera Food Tbk.',
+    'CEKA.JK': 'Wilmar Cahaya Indonesia Tbk.',
+    'GOOD.JK': 'Garudafood Putra Putri Jaya Tbk.',
+    'HOKI.JK': 'Buyung Poetra Sembada Tbk.',
+    'ICBP.JK': 'Indofood CBP Sukses Makmur Tbk.',
+    'INDF.JK': 'Indofood Sukses Makmur Tbk.',
+    'MYOR.JK': 'Mayora Indah Tbk.',
+    'ROTI.JK': 'Nippon Indosari Corpindo Tbk.',
+    'SKLT.JK': 'Sekar Laut Tbk.',
+    'STTP.JK': 'Siantar Top Tbk.'
+}
+
+# Daftar perusahaan sub-sektor Fish, Meat, & Poultry
+fish_meat_poultry = {
+    'CPIN.JK': 'Charoen Pokphand Indonesia Tbk.',
+    'CPRO.JK': 'Central Proteina Prima Tbk.',
+    'DPUM.JK': 'Dua Putra Utama Makmur Tbk.',
+    'JPFA.JK': 'Japfa Comfeed Indonesia Tbk.',
+    'MAIN.JK': 'Malindo Feedmill Tbk.'
+}
+
+# Gabungkan kedua daftar perusahaan
+companies = {**plantations_crops, **processed_foods}
+
+# Rentang tanggal yang diinginkan
+dates = ['2020-12-31', '2021-12-31', '2022-12-31', '2023-12-31']
+
+# Buat daftar untuk menyimpan semua data Cash Flow
+all_cash_flows = []
+
+for symbol, name in companies.items():
+    ticker = yf.Ticker(symbol)
+    cash_flow = ticker.cashflow  # Data Cash Flow tahunan
+
+    if cash_flow.empty:
+        print(f"Tidak ada data Cash Flow untuk {symbol}")
+        continue
+
+    # Ubah nama kolom menjadi format string tanggal
+    cash_flow.columns = cash_flow.columns.strftime('%Y-%m-%d')
+    available_dates = cash_flow.columns.tolist()
+    selected_dates = [date for date in dates if date in available_dates]
+
+    if not selected_dates:
+        print(f"Tidak ada data Cash Flow untuk tanggal yang ditentukan pada {symbol}")
+        continue
+
+    # Pilih kolom berdasarkan tanggal yang tersedia
+    cash_flow = cash_flow[selected_dates]
+    cash_flow = cash_flow.T  # Transpose DataFrame
+
+    # Tambahkan informasi perusahaan
+    cash_flow['Company'] = name
+    cash_flow['Symbol'] = symbol
+    cash_flow['Date'] = cash_flow.index
+
+    # Reset index untuk mengatur ulang DataFrame
+    cash_flow.reset_index(drop=True, inplace=True)
+
+    # Tambahkan ke daftar semua Cash Flow
+    all_cash_flows.append(cash_flow)
+
+# Gabungkan semua data menjadi satu DataFrame
+if all_cash_flows:
+    combined_cash_flows = pd.concat(all_cash_flows, ignore_index=True)
+    # Simpan ke file Excel atau CSV
+    combined_cash_flows.to_excel('Cashflow 23 Perusahaan Agribisnis.xlsx', index=False)
+    print("Data Cash Flow berhasil disimpan ke 'Cashflow 23 Perusahaan Agribisniss.xlsx'")
+else:
+    print("Tidak ada data Cash Flow yang ditemukan untuk perusahaan manapun.")
