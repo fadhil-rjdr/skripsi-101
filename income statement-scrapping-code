@@ -1,0 +1,87 @@
+import yfinance as yf
+import pandas as pd
+
+# Daftar perusahaan sub-sektor Plantations & Crops
+plantations_crops = {
+    'AALI.JK': 'Astra Agro Lestari Tbk.',
+    'BISI.JK': 'BISI International Tbk.',
+    'BWPT.JK': 'Eagle High Plantations Tbk.',
+    'DSNG.JK': 'Dharma Satya Nusantara Tbk.',
+    'LSIP.JK': 'PT PP London Sumatra Indonesia TBK.',
+    'SGRO.JK': 'Sampoerna Agro Tbk.',
+    'SIMP.JK': 'Salim Ivomas Pratama Tbk.',
+    'SMAR.JK': 'PT SMAR Tbk.',
+}
+
+# Daftar perusahaan sub-sektor Processed Foods
+processed_foods = {
+    'AISA.JK': 'Tiga Pilar Sejahtera Food Tbk.',
+    'CEKA.JK': 'Wilmar Cahaya Indonesia Tbk.',
+    'GOOD.JK': 'Garudafood Putra Putri Jaya Tbk.',
+    'HOKI.JK': 'Buyung Poetra Sembada Tbk.',
+    'ICBP.JK': 'Indofood CBP Sukses Makmur Tbk.',
+    'INDF.JK': 'Indofood Sukses Makmur Tbk.',
+    'MYOR.JK': 'Mayora Indah Tbk.',
+    'ROTI.JK': 'Nippon Indosari Corpindo Tbk.',
+    'SKLT.JK': 'Sekar Laut Tbk.',
+    'STTP.JK': 'Siantar Top Tbk.'
+}
+
+# Daftar perusahaan sub-sektor Fish, Meat, & Poultry
+fish_meat_poultry = {
+    'CPIN.JK': 'Charoen Pokphand Indonesia Tbk.',
+    'CPRO.JK': 'Central Proteina Prima Tbk.',
+    'DPUM.JK': 'Dua Putra Utama Makmur Tbk.',
+    'JPFA.JK': 'Japfa Comfeed Indonesia Tbk.',
+    'MAIN.JK': 'Malindo Feedmill Tbk.'
+}
+
+# Gabungkan kedua daftar perusahaan
+companies = {**plantations_crops, **processed_foods}
+
+# Rentang tanggal yang diinginkan
+dates = ['2020-12-31', '2021-12-31', '2022-12-31', '2023-12-31']
+
+# Buat DataFrame kosong untuk menyimpan semua data
+all_income_statements = []
+
+for symbol, name in companies.items():
+    ticker = yf.Ticker(symbol)
+    income_stmt = ticker.financials  # Data Income Statement tahunan
+
+    if income_stmt.empty:
+        print(f"Tidak ada data Income Statement untuk {symbol}")
+        continue
+
+    # Ubah nama kolom menjadi format string tanggal
+    income_stmt.columns = income_stmt.columns.strftime('%Y-%m-%d')
+    available_dates = income_stmt.columns.tolist()
+    selected_dates = [date for date in dates if date in available_dates]
+
+    if not selected_dates:
+        print(f"Tidak ada data Income Statement untuk tanggal yang ditentukan pada {symbol}")
+        continue
+
+    # Pilih kolom berdasarkan tanggal yang tersedia
+    income_stmt = income_stmt[selected_dates]
+    income_stmt = income_stmt.T  # Transpose DataFrame
+
+    # Tambahkan informasi perusahaan
+    income_stmt['Company'] = name
+    income_stmt['Symbol'] = symbol
+    income_stmt['Date'] = income_stmt.index
+
+    # Reset index untuk mengatur ulang DataFrame
+    income_stmt.reset_index(drop=True, inplace=True)
+
+    # Tambahkan ke daftar semua Income Statement
+    all_income_statements.append(income_stmt)
+
+# Gabungkan semua data menjadi satu DataFrame
+if all_income_statements:
+    combined_income_statements = pd.concat(all_income_statements, ignore_index=True)
+    # Simpan ke file Excel atau CSV
+    combined_income_statements.to_excel('Income Statement 23 Perusahaan Agribisnis.xlsx', index=False)
+    print("Data Income Statement berhasil disimpan ke 'Income Statement 23 Perusahaan Agribisniss.xlsx'")
+else:
+    print("Tidak ada data Income Statement yang ditemukan untuk perusahaan manapun.")
